@@ -63,6 +63,65 @@ final class APIClientTests: XCTestCase {
         XCTAssertTrue(query.contains(URLQueryItem(name: "type", value: "race")))
     }
 
+    func testTrackDecodesGeoJSONToFlatTrack() async throws {
+        StubURLProtocol.stub(
+            path: "/api/sessions/42/track",
+            status: 200,
+            json: """
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                [-122.4194, 37.7749],
+                                [-122.4184, 37.7759],
+                                [-122.4174, 37.7769]
+                            ]
+                        },
+                        "properties": {
+                            "session_id": 42,
+                            "points": 3,
+                            "timestamps": [
+                                "2026-04-17T14:00:00Z",
+                                "2026-04-17T14:00:01Z",
+                                "2026-04-17T14:00:02Z"
+                            ]
+                        }
+                    }
+                ]
+            }
+            """
+        )
+
+        let client = makeClient()
+        let track = try await client.track(for: 42)
+
+        XCTAssertEqual(track.sessionId, 42)
+        XCTAssertEqual(track.coordinates.count, 3)
+        // GeoJSON order is [lon, lat]; domain type uses named fields.
+        XCTAssertEqual(track.coordinates[0].latitude, 37.7749, accuracy: 0.0001)
+        XCTAssertEqual(track.coordinates[0].longitude, -122.4194, accuracy: 0.0001)
+        XCTAssertEqual(track.timestamps.count, 3)
+    }
+
+    func testTrackEmptyFeatureCollectionReturnsEmptyTrack() async throws {
+        StubURLProtocol.stub(
+            path: "/api/sessions/99/track",
+            status: 200,
+            json: #"{"type": "FeatureCollection", "features": []}"#
+        )
+
+        let client = makeClient()
+        let track = try await client.track(for: 99)
+
+        XCTAssertEqual(track.sessionId, 99)
+        XCTAssertTrue(track.isEmpty)
+        XCTAssertEqual(track.coordinates.count, 0)
+    }
+
     func testUnauthorizedMapsToAPIError() async {
         StubURLProtocol.stub(path: "/api/sessions", status: 401, json: "{}")
         let client = makeClient()

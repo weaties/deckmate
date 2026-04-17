@@ -124,9 +124,16 @@ private struct SessionRow: View {
 
 private struct SessionDetailView: View {
     let session: Session
+    @Environment(ServerConfiguration.self) private var config
 
     var body: some View {
         Form {
+            if let api = config.apiClient() {
+                Section("Track") {
+                    TrackMapView(session: session, api: api)
+                        .listRowInsets(EdgeInsets())
+                }
+            }
             Section("Overview") {
                 LabeledContent("Name", value: session.name)
                 LabeledContent("Kind", value: session.kind.rawValue.capitalized)

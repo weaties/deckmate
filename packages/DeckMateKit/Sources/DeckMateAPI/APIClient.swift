@@ -58,9 +58,15 @@ public final class APIClient: Sendable {
         return try await get(path: "/api/sessions", query: items)
     }
 
-    /// `GET /api/sessions/{id}/track` — the full instrument time series.
+    /// `GET /api/sessions/{id}/track` — the session's GPS polyline.
+    ///
+    /// The server returns a GeoJSON `FeatureCollection`; we flatten it
+    /// into a domain `Track` so callers don't deal with the envelope.
+    /// Returns an empty track (not `throw`) if the session exists but
+    /// has no recorded fixes.
     public func track(for sessionId: Int) async throws -> Track {
-        try await get(path: "/api/sessions/\(sessionId)/track")
+        let wire: TrackGeoJSON = try await get(path: "/api/sessions/\(sessionId)/track")
+        return wire.toTrack(sessionId: sessionId)
     }
 
     /// `GET /api/polar` — current polar baseline for the logged-in boat.

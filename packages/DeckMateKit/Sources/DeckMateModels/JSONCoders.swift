@@ -45,7 +45,7 @@ private extension JSONEncoder.DateEncodingStrategy {
     }
 }
 
-enum DeckMateISO8601 {
+public enum DeckMateISO8601 {
     private static let withFractional: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -58,11 +58,11 @@ enum DeckMateISO8601 {
         return f
     }()
 
-    static func parse(_ s: String) -> Date? {
+    public static func parse(_ s: String) -> Date? {
         withFractional.date(from: s) ?? withoutFractional.date(from: s)
     }
 
-    static func format(_ d: Date) -> String {
+    public static func format(_ d: Date) -> String {
         withFractional.string(from: d)
     }
 }
