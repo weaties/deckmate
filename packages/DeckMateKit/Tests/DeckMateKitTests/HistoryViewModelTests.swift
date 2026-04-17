@@ -8,28 +8,93 @@ final class HistoryViewModelTests: XCTestCase {
             XCTFail("loader should not fire until load()")
             return SessionListPage(total: 0, sessions: [])
         }
-        guard case .idle = vm.state else {
-            return XCTFail("expected .idle, got \(vm.state)")
-        }
-        XCTAssertNil(vm.sessions)
+        XCTAssertEqual(vm.status, .idle)
+        XCTAssertTrue(vm.sessions.isEmpty)
+        XCTAssertEqual(vm.total, 0)
+        XCTAssertFalse(vm.hasMore)
     }
 
-    func testLoadTransitionsToLoaded() async {
-        let page = SessionListPage(total: 3, sessions: Session.previews)
-        let vm = HistoryViewModel { limit, offset in
+    func testLoadSettlesWithAccumulatedSessions() async {
+        let vm = HistoryViewModel(pageSize: 25) { limit, offset in
             XCTAssertEqual(limit, 25)
             XCTAssertEqual(offset, 0)
-            return page
+            return SessionListPage(total: 3, sessions: Session.previews)
         }
 
         await vm.load()
 
-        guard case .loaded(let got) = vm.state else {
-            return XCTFail("expected .loaded, got \(vm.state)")
+        XCTAssertEqual(vm.status, .settled)
+        XCTAssertEqual(vm.sessions.count, 3)
+        XCTAssertEqual(vm.total, 3)
+        XCTAssertFalse(vm.hasMore)
+    }
+
+    func testLoadResetsAccumulatedStateOnRefresh() async {
+        var callCount = 0
+        let vm = HistoryViewModel(pageSize: 2) { _, offset in
+            callCount += 1
+            if offset == 0 {
+                return SessionListPage(
+                    total: 4,
+                    sessions: [Session.previews[0], Session.previews[1]]
+                )
+            }
+            return SessionListPage(total: 4, sessions: [Session.previews[2]])
         }
-        XCTAssertEqual(got.total, 3)
-        XCTAssertEqual(got.sessions.count, 3)
-        XCTAssertEqual(vm.sessions?.count, 3)
+
+        await vm.load()
+        await vm.loadMoreIfNeeded()
+        XCTAssertEqual(vm.sessions.count, 3)
+
+        await vm.load()
+        XCTAssertEqual(vm.sessions.count, 2, "refresh should reset accumulation")
+        XCTAssertEqual(vm.total, 4)
+    }
+
+    func testLoadMoreAppendsNextPage() async {
+        var capturedOffsets: [Int] = []
+        let vm = HistoryViewModel(pageSize: 2) { _, offset in
+            capturedOffsets.append(offset)
+            if offset == 0 {
+                return SessionListPage(
+                    total: 3,
+                    sessions: [Session.previews[0], Session.previews[1]]
+                )
+            }
+            return SessionListPage(total: 3, sessions: [Session.previews[2]])
+        }
+
+        await vm.load()
+        XCTAssertTrue(vm.hasMore)
+        XCTAssertEqual(vm.sessions.count, 2)
+
+        await vm.loadMoreIfNeeded()
+        XCTAssertEqual(capturedOffsets, [0, 2])
+        XCTAssertEqual(vm.sessions.count, 3)
+        XCTAssertFalse(vm.hasMore)
+        XCTAssertEqual(vm.status, .settled)
+    }
+
+    func testLoadMoreIsNoOpWhenNothingMoreToLoad() async {
+        var callCount = 0
+        let vm = HistoryViewModel(pageSize: 25) { _, _ in
+            callCount += 1
+            return SessionListPage(total: 1, sessions: [Session.previews[0]])
+        }
+
+        await vm.load()
+        XCTAssertFalse(vm.hasMore)
+        await vm.loadMoreIfNeeded()
+        XCTAssertEqual(callCount, 1, "loadMoreIfNeeded should not fire a second request")
+    }
+
+    func testLoadMoreIsNoOpBeforeFirstLoad() async {
+        let vm = HistoryViewModel { _, _ in
+            XCTFail("loadMoreIfNeeded should not fire without a prior load()")
+            return SessionListPage(total: 0, sessions: [])
+        }
+        await vm.loadMoreIfNeeded()
+        XCTAssertEqual(vm.status, .idle)
     }
 
     func testLoadFailureMapsAPIErrorToFriendlyMessage() async {
@@ -39,41 +104,71 @@ final class HistoryViewModelTests: XCTestCase {
 
         await vm.load()
 
-        guard case .failed(let reason) = vm.state else {
-            return XCTFail("expected .failed, got \(vm.state)")
+        guard case .failed(let reason) = vm.status else {
+            return XCTFail("expected .failed, got \(vm.status)")
         }
         XCTAssertTrue(reason.message.contains("Settings"),
                       "expected unauthorized message to mention Settings, got: \(reason.message)")
     }
 
-    func testLoadFailureUnknownErrorFallsBack() async {
-        struct Boom: Error {}
-        let vm = HistoryViewModel { _, _ in throw Boom() }
+    func testLoadMoreFailureKeepsExistingSessionsVisible() async {
+        var callCount = 0
+        let vm = HistoryViewModel(pageSize: 2) { _, _ in
+            callCount += 1
+            if callCount == 1 {
+                return SessionListPage(
+                    total: 5,
+                    sessions: [Session.previews[0], Session.previews[1]]
+                )
+            }
+            throw URLError(.notConnectedToInternet)
+        }
 
         await vm.load()
+        XCTAssertEqual(vm.sessions.count, 2)
 
-        guard case .failed(let reason) = vm.state else {
-            return XCTFail("expected .failed, got \(vm.state)")
+        await vm.loadMoreIfNeeded()
+        XCTAssertEqual(vm.sessions.count, 2, "failure should NOT wipe prior sessions")
+        if case .failed(let reason) = vm.status {
+            XCTAssertTrue(reason.message.contains("internet"))
+        } else {
+            XCTFail("expected .failed, got \(vm.status)")
         }
-        XCTAssertFalse(reason.message.isEmpty)
+    }
+}
+
+@MainActor
+final class FailureReasonTests: XCTestCase {
+    func testURLErrorNotConnectedProducesShortMessage() {
+        let reason = FailureReason(URLError(.notConnectedToInternet))
+        XCTAssertEqual(reason.message, "No internet connection.")
     }
 
-    func testReloadAfterFailureSucceeds() async {
-        var attempt = 0
-        let vm = HistoryViewModel { _, _ in
-            attempt += 1
-            if attempt == 1 { throw APIError.server(500) }
-            return SessionListPage(total: 1, sessions: [Session.previews[0]])
-        }
+    func testURLErrorCannotFindHostMentionsSettings() {
+        let reason = FailureReason(URLError(.cannotFindHost))
+        XCTAssertTrue(reason.message.contains("Settings"))
+    }
 
-        await vm.load()
-        guard case .failed = vm.state else {
-            return XCTFail("first call should fail")
-        }
+    func testURLErrorTimedOutMentionsServer() {
+        let reason = FailureReason(URLError(.timedOut))
+        XCTAssertTrue(reason.message.contains("server"))
+    }
 
-        await vm.load()
-        guard case .loaded = vm.state else {
-            return XCTFail("second call should succeed")
+    func testURLErrorATSIsExplained() {
+        let reason = FailureReason(URLError(.appTransportSecurityRequiresSecureConnection))
+        XCTAssertTrue(reason.message.contains("plain-HTTP"))
+    }
+
+    func testAPIErrorUnauthorizedMentionsSettings() {
+        let reason = FailureReason(APIError.unauthorized)
+        XCTAssertTrue(reason.message.contains("Settings"))
+    }
+
+    func testUnknownErrorFallsBackToLocalizedDescription() {
+        struct Boom: LocalizedError {
+            var errorDescription: String? { "a custom thing went wrong" }
         }
+        let reason = FailureReason(Boom())
+        XCTAssertEqual(reason.message, "a custom thing went wrong")
     }
 }

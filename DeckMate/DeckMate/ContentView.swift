@@ -53,30 +53,9 @@ private struct HistoryList: View {
 
     var body: some View {
         Group {
-            switch vm?.state {
-            case .loaded(let page) where page.sessions.isEmpty:
-                ContentUnavailableView(
-                    "No sessions yet",
-                    systemImage: "tray",
-                    description: Text("Start a session on the boat and it'll appear here.")
-                )
-            case .loaded(let page):
-                List(page.sessions) { session in
-                    NavigationLink(value: session) {
-                        SessionRow(session: session)
-                    }
-                }
-            case .failed(let reason):
-                ContentUnavailableView {
-                    Label("Couldn't load sessions", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(reason.message)
-                } actions: {
-                    Button("Try Again") {
-                        Task { await vm?.load() }
-                    }
-                }
-            case .idle, .loading, .none:
+            if let vm {
+                content(for: vm)
+            } else {
                 ProgressView("Loading…")
             }
         }
@@ -84,10 +63,80 @@ private struct HistoryList: View {
             if vm == nil {
                 vm = HistoryViewModel(api: api)
             }
-            await vm?.load()
+            if vm?.sessions.isEmpty == true, case .idle = vm?.status {
+                await vm?.load()
+            }
         }
         .refreshable {
             await vm?.load()
+        }
+    }
+
+    @ViewBuilder
+    private func content(for vm: HistoryViewModel) -> some View {
+        switch (vm.status, vm.sessions.isEmpty) {
+        case (.idle, _), (.loadingFirstPage, true):
+            ProgressView("Loading…")
+        case (.settled, true):
+            ContentUnavailableView(
+                "No sessions yet",
+                systemImage: "tray",
+                description: Text("Start a session on the boat and it'll appear here.")
+            )
+        case (.failed(let reason), true):
+            ContentUnavailableView {
+                Label("Couldn't load sessions", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(reason.message)
+            } actions: {
+                Button("Try Again") {
+                    Task { await vm.load() }
+                }
+            }
+        default:
+            sessionList(vm: vm)
+        }
+    }
+
+    private func sessionList(vm: HistoryViewModel) -> some View {
+        List {
+            ForEach(vm.sessions) { session in
+                NavigationLink(value: session) {
+                    SessionRow(session: session)
+                }
+                .onAppear {
+                    if session == vm.sessions.last {
+                        Task { await vm.loadMoreIfNeeded() }
+                    }
+                }
+            }
+
+            if vm.hasMore {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+            }
+
+            if case .failed(let reason) = vm.status, !vm.sessions.isEmpty {
+                // Non-blocking error row — the list is already populated
+                // from a prior page; only this attempt failed.
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text(reason.message)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Retry") {
+                        Task { await vm.loadMoreIfNeeded() }
+                    }
+                    .font(.footnote)
+                }
+                .listRowSeparator(.hidden)
+            }
         }
     }
 }

@@ -10,9 +10,9 @@ import DeckMateModels
 
 /// The view model backing the History screen.
 ///
-/// Exposes a single `state: LoadState<SessionListPage>` that views observe;
-/// the screen renders a spinner, a list, or an error row based on which
-/// case is current. Views never call `APIClient` directly — they call
+/// Keeps an accumulated list of sessions across paginated loads and
+/// exposes a small `Status` enum views switch on for loading / error /
+/// idle rendering. Views never call `APIClient` directly — they call
 /// `load()` on this type and observe the result.
 ///
 /// Built with Swift's `@Observable` macro (iOS 17+), the modern successor
@@ -29,7 +29,24 @@ public final class HistoryViewModel {
     /// no stubs, just a function that returns canned data.
     public typealias Loader = @Sendable (_ limit: Int, _ offset: Int) async throws -> SessionListPage
 
-    public private(set) var state: LoadState<SessionListPage> = .idle
+    /// Lifecycle of the view model. Views switch on this to render a
+    /// spinner for the initial load, a subtle indicator for pagination,
+    /// or an error panel. `.settled` means a page has been loaded and we
+    /// are waiting for the user to scroll or refresh.
+    public enum Status: Sendable, Hashable {
+        case idle
+        case loadingFirstPage
+        case loadingMore
+        case settled
+        case failed(FailureReason)
+    }
+
+    public private(set) var status: Status = .idle
+    public private(set) var sessions: [Session] = []
+    public private(set) var total: Int = 0
+
+    /// True when the server reports more sessions beyond what we've loaded.
+    public var hasMore: Bool { sessions.count < total }
 
     private let loader: Loader
     private let pageSize: Int
@@ -46,42 +63,47 @@ public final class HistoryViewModel {
         }
     }
 
-    /// Kick off a load. Callers invoke this from `.task { … }` on appear,
-    /// or from a pull-to-refresh. Transitions state to `.loading` first so
-    /// the UI can show a spinner even when the network call returns fast.
+    /// Initial load or refresh. Wipes the accumulated state before calling
+    /// so a pull-to-refresh always starts from offset 0.
     public func load() async {
-        state = .loading
+        status = .loadingFirstPage
+        sessions = []
+        total = 0
         do {
             let page = try await loader(pageSize, 0)
-            state = .loaded(page)
+            sessions = page.sessions
+            total = page.total
+            status = .settled
         } catch {
-            state = .failed(FailureReason(error))
+            status = .failed(FailureReason(error))
         }
     }
 
-    /// Returns the sessions from the current `.loaded` state, or `nil`
-    /// for any other state. Convenient when views want to render
-    /// incrementally without unwrapping the enum each time.
-    public var sessions: [Session]? {
-        guard case .loaded(let page) = state else { return nil }
-        return page.sessions
+    /// Append the next page if one exists. No-op if already loading, if we
+    /// have everything, or if the first load hasn't happened yet. Views
+    /// call this from `.onAppear` on the last visible row.
+    public func loadMoreIfNeeded() async {
+        guard status == .settled, hasMore else { return }
+        status = .loadingMore
+        do {
+            let page = try await loader(pageSize, sessions.count)
+            sessions.append(contentsOf: page.sessions)
+            total = page.total
+            status = .settled
+        } catch {
+            // Don't wipe accumulated sessions — keep them visible so the
+            // user can retry without losing scroll position.
+            status = .failed(FailureReason(error))
+        }
     }
 }
 
-/// Generic loading state — idle until asked, in-flight, succeeded with a
-/// value, or failed with a reason. Parameterised over the success payload
-/// so the same shape works for other screens (polars, tracks, etc.).
-public enum LoadState<Value: Sendable>: Sendable {
-    case idle
-    case loading
-    case loaded(Value)
-    case failed(FailureReason)
-}
-
-/// A display-safe representation of an error — holds the underlying error
-/// for diagnostics plus a short message suitable for the UI. We don't
-/// surface `Error` directly because it isn't `Equatable`/`Sendable` in a
-/// useful way, and views shouldn't be deciding how to stringify errors.
+/// A display-safe representation of an error — holds a short message
+/// suitable for the UI. Views render `.message`, never `Error` directly.
+///
+/// Known error types are translated to friendly text with actionable
+/// hints ("Check your server credential in Settings") rather than raw
+/// NSError descriptions ("Error Domain=NSURLErrorDomain Code=-1003…").
 public struct FailureReason: Sendable, Hashable {
     public let message: String
 
@@ -92,7 +114,11 @@ public struct FailureReason: Sendable, Hashable {
             return
         }
         #endif
-        self.message = "\(error)"
+        if let urlError = error as? URLError {
+            self.message = Self.describe(urlError)
+            return
+        }
+        self.message = error.localizedDescription
     }
 
     public init(message: String) {
@@ -114,4 +140,31 @@ public struct FailureReason: Sendable, Hashable {
         }
     }
     #endif
+
+    private static func describe(_ error: URLError) -> String {
+        switch error.code {
+        case .notConnectedToInternet:
+            return "No internet connection."
+        case .timedOut:
+            return "The server took too long to respond."
+        case .cannotFindHost, .dnsLookupFailed:
+            return "Couldn't resolve the server's hostname. Check the URL in Settings."
+        case .cannotConnectToHost:
+            return "Couldn't reach the server. It may be offline or on a different network."
+        case .networkConnectionLost:
+            return "The connection dropped mid-request. Try again."
+        case .badURL:
+            return "The server URL looks malformed. Check Settings."
+        case .appTransportSecurityRequiresSecureConnection:
+            return "This device won't allow plain-HTTP connections to that server."
+        case .secureConnectionFailed, .serverCertificateUntrusted,
+             .serverCertificateHasBadDate, .serverCertificateNotYetValid,
+             .serverCertificateHasUnknownRoot, .clientCertificateRejected:
+            return "The server's TLS certificate couldn't be verified."
+        case .userCancelledAuthentication, .userAuthenticationRequired:
+            return "Authentication is required. Set a credential in Settings."
+        default:
+            return "Network error: \(error.localizedDescription)"
+        }
+    }
 }
