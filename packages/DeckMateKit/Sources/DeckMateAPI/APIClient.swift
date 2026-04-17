@@ -69,6 +69,12 @@ public final class APIClient: Sendable {
         return wire.toTrack(sessionId: sessionId)
     }
 
+    /// `GET /api/sessions/{id}/summary` — compact performance summary
+    /// (average wind, top-3 finishers, own result).
+    public func summary(for sessionId: Int) async throws -> SessionSummary {
+        try await get(path: "/api/sessions/\(sessionId)/summary")
+    }
+
     /// `GET /api/polar` — current polar baseline for the logged-in boat.
     public func polar() async throws -> Polar {
         try await get(path: "/api/polar")

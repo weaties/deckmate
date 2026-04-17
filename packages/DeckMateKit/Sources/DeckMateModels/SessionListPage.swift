@@ -6,7 +6,7 @@ import Foundation
 /// `total` is the server-side count of sessions matching the query
 /// (independent of `limit`/`offset`), useful for paginated UIs that want
 /// to show "42 of 1,250 results".
-public struct SessionListPage: Codable, Hashable, Sendable {
+public struct SessionListPage: Decodable, Hashable, Sendable {
     public let total: Int
     public let sessions: [Session]
 
