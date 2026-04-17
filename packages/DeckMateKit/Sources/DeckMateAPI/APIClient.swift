@@ -34,9 +34,28 @@ public final class APIClient: Sendable {
 
     // MARK: - History browser endpoints (v0.1)
 
-    /// `GET /api/sessions` — list of recorded sessions for the logged-in boat.
-    public func sessions() async throws -> [Session] {
-        try await get(path: "/api/sessions")
+    /// `GET /api/sessions` — paginated list of sessions for the logged-in boat.
+    ///
+    /// - Parameters:
+    ///   - limit: maximum number of sessions to return (server clamps to 200).
+    ///   - offset: skip this many sessions. For offset-based pagination.
+    ///   - query: free-text search over session name and event. `nil` for no filter.
+    ///   - kind: restrict to one `Session.Kind`. `nil` for all kinds.
+    /// - Returns: a `SessionListPage` with `total` (server-side unfiltered
+    ///   count) and the decoded `sessions` slice.
+    public func sessions(
+        limit: Int = 25,
+        offset: Int = 0,
+        query: String? = nil,
+        kind: Session.Kind? = nil
+    ) async throws -> SessionListPage {
+        var items: [URLQueryItem] = [
+            URLQueryItem(name: "limit", value: String(limit)),
+            URLQueryItem(name: "offset", value: String(offset)),
+        ]
+        if let query { items.append(URLQueryItem(name: "q", value: query)) }
+        if let kind { items.append(URLQueryItem(name: "type", value: kind.rawValue)) }
+        return try await get(path: "/api/sessions", query: items)
     }
 
     /// `GET /api/sessions/{id}/track` — the full instrument time series.
@@ -78,8 +97,11 @@ public final class APIClient: Sendable {
 
     // MARK: - Internal helpers
 
-    private func get<T: Decodable>(path: String) async throws -> T {
-        var request = try await baseRequest(path: path)
+    private func get<T: Decodable>(
+        path: String,
+        query: [URLQueryItem] = []
+    ) async throws -> T {
+        var request = try await baseRequest(path: path, query: query)
         request.httpMethod = "GET"
         return try await send(request)
     }
@@ -102,8 +124,20 @@ public final class APIClient: Sendable {
         return data
     }
 
-    private func baseRequest(path: String) async throws -> URLRequest {
-        guard let url = URL(string: path, relativeTo: server.baseURL) else {
+    private func baseRequest(
+        path: String,
+        query: [URLQueryItem] = []
+    ) async throws -> URLRequest {
+        guard
+            let resolved = URL(string: path, relativeTo: server.baseURL),
+            var components = URLComponents(url: resolved, resolvingAgainstBaseURL: true)
+        else {
+            throw APIError.invalidURL(path)
+        }
+        if !query.isEmpty {
+            components.queryItems = query
+        }
+        guard let url = components.url else {
             throw APIError.invalidURL(path)
         }
         var request = URLRequest(url: url)

@@ -12,26 +12,55 @@ final class APIClientTests: XCTestCase {
         StubURLProtocol.reset()
     }
 
-    func testSessionsDecodesResponse() async throws {
+    func testSessionsDecodesEnvelope() async throws {
         StubURLProtocol.stub(
             path: "/api/sessions",
             status: 200,
             json: """
-            [
-                {
-                    "id": 1, "type": "race", "name": "R1",
-                    "start_utc": "2026-04-17T18:00:00.000Z",
-                    "end_utc": null
-                }
-            ]
+            {
+                "total": 42,
+                "sessions": [
+                    {
+                        "id": 1, "type": "race", "name": "R1",
+                        "start_utc": "2026-04-17T18:00:00.000Z",
+                        "end_utc": null
+                    },
+                    {
+                        "id": 2, "type": "practice", "name": "P1",
+                        "start_utc": "2026-04-18T12:00:00.000Z",
+                        "end_utc": "2026-04-18T13:30:00.000Z"
+                    }
+                ]
+            }
             """
         )
 
         let client = makeClient()
-        let sessions = try await client.sessions()
-        XCTAssertEqual(sessions.count, 1)
-        XCTAssertEqual(sessions[0].id, 1)
-        XCTAssertEqual(sessions[0].name, "R1")
+        let page = try await client.sessions(limit: 25, offset: 0)
+        XCTAssertEqual(page.total, 42)
+        XCTAssertEqual(page.sessions.count, 2)
+        XCTAssertEqual(page.sessions[0].id, 1)
+        XCTAssertEqual(page.sessions[0].kind, .race)
+        XCTAssertEqual(page.sessions[1].kind, .practice)
+    }
+
+    func testSessionsAppendsQueryItems() async throws {
+        StubURLProtocol.stub(
+            path: "/api/sessions",
+            status: 200,
+            json: #"{"total": 0, "sessions": []}"#
+        )
+
+        let client = makeClient()
+        _ = try await client.sessions(limit: 50, offset: 25, query: "frostbite", kind: .race)
+
+        let captured = StubURLProtocol.lastRequest
+        XCTAssertEqual(captured?.url?.path, "/api/sessions")
+        let query = captured.flatMap { $0.url.flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false)?.queryItems } } ?? []
+        XCTAssertTrue(query.contains(URLQueryItem(name: "limit", value: "50")))
+        XCTAssertTrue(query.contains(URLQueryItem(name: "offset", value: "25")))
+        XCTAssertTrue(query.contains(URLQueryItem(name: "q", value: "frostbite")))
+        XCTAssertTrue(query.contains(URLQueryItem(name: "type", value: "race")))
     }
 
     func testUnauthorizedMapsToAPIError() async {
@@ -66,12 +95,17 @@ final class APIClientTests: XCTestCase {
     }
 }
 
-/// Minimal URLProtocol stub. Swap `stub(path:status:json:)` per-test.
+/// Minimal URLProtocol stub. Swap `stub(path:status:json:)` per-test; inspect
+/// `lastRequest` after the call to assert on the outgoing URL/headers/body.
 final class StubURLProtocol: URLProtocol {
     struct Stub { let status: Int; let body: Data }
     nonisolated(unsafe) private static var stubs: [String: Stub] = [:]
+    nonisolated(unsafe) static var lastRequest: URLRequest?
 
-    static func reset() { stubs.removeAll() }
+    static func reset() {
+        stubs.removeAll()
+        lastRequest = nil
+    }
     static func stub(path: String, status: Int, json: String) {
         stubs[path] = Stub(status: status, body: json.data(using: .utf8)!)
     }
@@ -80,6 +114,7 @@ final class StubURLProtocol: URLProtocol {
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
+        Self.lastRequest = request
         guard
             let url = request.url,
             let stub = Self.stubs[url.path]
