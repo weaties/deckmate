@@ -67,5 +67,10 @@ let package = Package(
             dependencies: ["DeckMateAuth"],
             path: "Tests/DeckMateAuthTests"
         ),
+        .testTarget(
+            name: "DeckMateKitTests",
+            dependencies: ["DeckMateKit"],
+            path: "Tests/DeckMateKitTests"
+        ),
     ]
 )
