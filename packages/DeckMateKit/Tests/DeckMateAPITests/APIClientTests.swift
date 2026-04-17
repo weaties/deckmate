@@ -19,10 +19,9 @@ final class APIClientTests: XCTestCase {
             json: """
             [
                 {
-                    "id": 1, "kind": "race", "name": "R1",
+                    "id": 1, "type": "race", "name": "R1",
                     "start_utc": "2026-04-17T18:00:00.000Z",
-                    "end_utc": null, "boat_id": "B1",
-                    "co_op_id": null, "embargo_until": null
+                    "end_utc": null
                 }
             ]
             """

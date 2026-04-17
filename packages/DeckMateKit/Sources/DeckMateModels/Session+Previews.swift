@@ -20,7 +20,7 @@ public extension Session {
             ),
             Session(
                 id: 2,
-                kind: .audio,
+                kind: .debrief,
                 name: "Post-race debrief",
                 startUtc: feb,
                 endUtc: feb.addingTimeInterval(900),

@@ -1,8 +1,8 @@
 import Foundation
 
-/// A recorded sailing session — either a `race` or a standalone `audio`
-/// session. Shape mirrors what `GET /api/sessions/{id}` returns on the
-/// HelmLog server (`../helmlog/src/helmlog/routes/sessions.py`).
+/// A recorded sailing session — a race, a practice, a debrief, or a
+/// server-synthesized block. Shape matches what `GET /api/sessions`
+/// returns on the HelmLog server (`../helmlog/src/helmlog/routes/sessions.py`).
 ///
 /// Keep field names aligned with the server JSON. If the server renames a
 /// column, add a `CodingKeys` mapping here rather than renaming in Swift.
@@ -18,9 +18,11 @@ public struct Session: Codable, Hashable, Identifiable, Sendable {
     /// not render track or instrument data while an embargo is active.
     public let embargoUntil: Date?
 
-    public enum Kind: String, Codable, Sendable {
+    public enum Kind: String, Codable, Sendable, CaseIterable {
         case race
-        case audio
+        case practice
+        case debrief
+        case synthesized
     }
 
     public init(
@@ -41,6 +43,22 @@ public struct Session: Codable, Hashable, Identifiable, Sendable {
         self.boatId = boatId
         self.coOpId = coOpId
         self.embargoUntil = embargoUntil
+    }
+
+    /// The server returns the kind field as `"type"`; we expose it as `kind`
+    /// in Swift because `type` is a keyword-adjacent name that shadows
+    /// common Swift idioms. Other fields rely on the decoder's
+    /// `.convertFromSnakeCase` strategy, which runs before these CodingKeys
+    /// are matched — so raw values here are already camelCase.
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case kind = "type"
+        case name
+        case startUtc
+        case endUtc
+        case boatId
+        case coOpId
+        case embargoUntil
     }
 }
 

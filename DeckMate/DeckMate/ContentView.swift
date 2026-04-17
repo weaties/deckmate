@@ -47,7 +47,9 @@ private struct SessionRow: View {
     private var icon: String {
         switch session.kind {
         case .race: "flag.checkered"
-        case .audio: "waveform"
+        case .practice: "sailboat"
+        case .synthesized: "sparkles"
+        case .debrief: "waveform"
         }
     }
 }
