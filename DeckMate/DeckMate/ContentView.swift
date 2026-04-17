@@ -9,17 +9,85 @@ import SwiftUI
 import DeckMateKit
 
 struct ContentView: View {
+    @Environment(ServerConfiguration.self) private var config
+    @State private var showingSettings = false
+
     var body: some View {
         NavigationStack {
-            List(Session.previews) { session in
-                NavigationLink(value: session) {
-                    SessionRow(session: session)
+            Group {
+                if let api = config.apiClient() {
+                    HistoryList(api: api)
+                } else {
+                    ContentUnavailableView {
+                        Label("No server configured", systemImage: "sailboat")
+                    } description: {
+                        Text("Point DeckMate at your HelmLog server to see sessions.")
+                    } actions: {
+                        Button("Open Settings") { showingSettings = true }
+                            .buttonStyle(.borderedProminent)
+                    }
                 }
             }
             .navigationTitle("Sessions")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showingSettings = true } label: {
+                        Image(systemName: "gear")
+                    }
+                    .accessibilityLabel("Settings")
+                }
+            }
             .navigationDestination(for: Session.self) { session in
                 SessionDetailView(session: session)
             }
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+        }
+    }
+}
+
+private struct HistoryList: View {
+    let api: APIClient
+    @State private var vm: HistoryViewModel?
+
+    var body: some View {
+        Group {
+            switch vm?.state {
+            case .loaded(let page) where page.sessions.isEmpty:
+                ContentUnavailableView(
+                    "No sessions yet",
+                    systemImage: "tray",
+                    description: Text("Start a session on the boat and it'll appear here.")
+                )
+            case .loaded(let page):
+                List(page.sessions) { session in
+                    NavigationLink(value: session) {
+                        SessionRow(session: session)
+                    }
+                }
+            case .failed(let reason):
+                ContentUnavailableView {
+                    Label("Couldn't load sessions", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(reason.message)
+                } actions: {
+                    Button("Try Again") {
+                        Task { await vm?.load() }
+                    }
+                }
+            case .idle, .loading, .none:
+                ProgressView("Loading…")
+            }
+        }
+        .task {
+            if vm == nil {
+                vm = HistoryViewModel(api: api)
+            }
+            await vm?.load()
+        }
+        .refreshable {
+            await vm?.load()
         }
     }
 }
@@ -103,12 +171,7 @@ private struct SessionDetailView: View {
     }
 }
 
-#Preview("List") {
+#Preview("Unconfigured") {
     ContentView()
-}
-
-#Preview("Detail") {
-    NavigationStack {
-        SessionDetailView(session: Session.previews[0])
-    }
+        .environment(ServerConfiguration())
 }

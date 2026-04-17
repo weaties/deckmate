@@ -10,9 +10,12 @@ import DeckMateKit
 
 @main
 struct DeckMateApp: App {
+    @State private var config = ServerConfiguration()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(config)
         }
     }
 }
