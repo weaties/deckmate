@@ -8,16 +8,75 @@
 
 /* Begin PBXBuildFile section */
 		99B765A12F929056002C01B9 /* DeckMateKit in Frameworks */ = {isa = PBXBuildFile; productRef = 99B765A02F929056002C01B9 /* DeckMateKit */; };
+		99B765C32F929B88002C01B9 /* DeckMateWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 99B765C22F929B87002C01B9 /* DeckMateWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		99B765F22F929F62002C01B9 /* DeckMateKit in Frameworks */ = {isa = PBXBuildFile; productRef = 99B765F12F929F62002C01B9 /* DeckMateKit */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		99B765C42F929B88002C01B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 99B765892F928C07002C01B9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 99B765C12F929B87002C01B9;
+			remoteInfo = "DeckMateWatch Watch App";
+		};
+		99B765D22F929B89002C01B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 99B765892F928C07002C01B9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 99B765C12F929B87002C01B9;
+			remoteInfo = "DeckMateWatch Watch App";
+		};
+		99B765DC2F929B89002C01B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 99B765892F928C07002C01B9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 99B765C12F929B87002C01B9;
+			remoteInfo = "DeckMateWatch Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		99B765E62F929B89002C01B9 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				99B765C32F929B88002C01B9 /* DeckMateWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		99B765912F928C07002C01B9 /* DeckMate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DeckMate.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		99B765BD2F929B87002C01B9 /* DeckMateWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DeckMateWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		99B765C22F929B87002C01B9 /* DeckMateWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "DeckMateWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		99B765D12F929B89002C01B9 /* DeckMateWatch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "DeckMateWatch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		99B765DB2F929B89002C01B9 /* DeckMateWatch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "DeckMateWatch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		99B765932F928C07002C01B9 /* DeckMate */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = DeckMate;
+			sourceTree = "<group>";
+		};
+		99B765C62F929B88002C01B9 /* DeckMateWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "DeckMateWatch Watch App";
+			sourceTree = "<group>";
+		};
+		99B765D42F929B89002C01B9 /* DeckMateWatch Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "DeckMateWatch Watch AppTests";
+			sourceTree = "<group>";
+		};
+		99B765DE2F929B89002C01B9 /* DeckMateWatch Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "DeckMateWatch Watch AppUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -31,6 +90,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		99B765BF2F929B87002C01B9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				99B765F22F929F62002C01B9 /* DeckMateKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		99B765CE2F929B89002C01B9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		99B765D82F929B89002C01B9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -38,6 +119,10 @@
 			isa = PBXGroup;
 			children = (
 				99B765932F928C07002C01B9 /* DeckMate */,
+				99B765C62F929B88002C01B9 /* DeckMateWatch Watch App */,
+				99B765D42F929B89002C01B9 /* DeckMateWatch Watch AppTests */,
+				99B765DE2F929B89002C01B9 /* DeckMateWatch Watch AppUITests */,
+				99B765F02F929F62002C01B9 /* Frameworks */,
 				99B765922F928C07002C01B9 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -46,8 +131,19 @@
 			isa = PBXGroup;
 			children = (
 				99B765912F928C07002C01B9 /* DeckMate.app */,
+				99B765BD2F929B87002C01B9 /* DeckMateWatch.app */,
+				99B765C22F929B87002C01B9 /* DeckMateWatch Watch App.app */,
+				99B765D12F929B89002C01B9 /* DeckMateWatch Watch AppTests.xctest */,
+				99B765DB2F929B89002C01B9 /* DeckMateWatch Watch AppUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		99B765F02F929F62002C01B9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -76,6 +172,94 @@
 			productReference = 99B765912F928C07002C01B9 /* DeckMate.app */;
 			productType = "com.apple.product-type.application";
 		};
+		99B765BC2F929B87002C01B9 /* DeckMateWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 99B765E72F929B89002C01B9 /* Build configuration list for PBXNativeTarget "DeckMateWatch" */;
+			buildPhases = (
+				99B765BB2F929B87002C01B9 /* Resources */,
+				99B765E62F929B89002C01B9 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				99B765C52F929B88002C01B9 /* PBXTargetDependency */,
+			);
+			name = DeckMateWatch;
+			packageProductDependencies = (
+			);
+			productName = DeckMateWatch;
+			productReference = 99B765BD2F929B87002C01B9 /* DeckMateWatch.app */;
+			productType = "com.apple.product-type.application.watchapp2-container";
+		};
+		99B765C12F929B87002C01B9 /* DeckMateWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 99B765E32F929B89002C01B9 /* Build configuration list for PBXNativeTarget "DeckMateWatch Watch App" */;
+			buildPhases = (
+				99B765BE2F929B87002C01B9 /* Sources */,
+				99B765BF2F929B87002C01B9 /* Frameworks */,
+				99B765C02F929B87002C01B9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				99B765C62F929B88002C01B9 /* DeckMateWatch Watch App */,
+			);
+			name = "DeckMateWatch Watch App";
+			packageProductDependencies = (
+				99B765F12F929F62002C01B9 /* DeckMateKit */,
+			);
+			productName = "DeckMateWatch Watch App";
+			productReference = 99B765C22F929B87002C01B9 /* DeckMateWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		99B765D02F929B89002C01B9 /* DeckMateWatch Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 99B765EA2F929B89002C01B9 /* Build configuration list for PBXNativeTarget "DeckMateWatch Watch AppTests" */;
+			buildPhases = (
+				99B765CD2F929B89002C01B9 /* Sources */,
+				99B765CE2F929B89002C01B9 /* Frameworks */,
+				99B765CF2F929B89002C01B9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				99B765D32F929B89002C01B9 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				99B765D42F929B89002C01B9 /* DeckMateWatch Watch AppTests */,
+			);
+			name = "DeckMateWatch Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "DeckMateWatch Watch AppTests";
+			productReference = 99B765D12F929B89002C01B9 /* DeckMateWatch Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		99B765DA2F929B89002C01B9 /* DeckMateWatch Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 99B765ED2F929B89002C01B9 /* Build configuration list for PBXNativeTarget "DeckMateWatch Watch AppUITests" */;
+			buildPhases = (
+				99B765D72F929B89002C01B9 /* Sources */,
+				99B765D82F929B89002C01B9 /* Frameworks */,
+				99B765D92F929B89002C01B9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				99B765DD2F929B89002C01B9 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				99B765DE2F929B89002C01B9 /* DeckMateWatch Watch AppUITests */,
+			);
+			name = "DeckMateWatch Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "DeckMateWatch Watch AppUITests";
+			productReference = 99B765DB2F929B89002C01B9 /* DeckMateWatch Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -88,6 +272,20 @@
 				TargetAttributes = {
 					99B765902F928C07002C01B9 = {
 						CreatedOnToolsVersion = 26.4;
+					};
+					99B765BC2F929B87002C01B9 = {
+						CreatedOnToolsVersion = 26.4;
+					};
+					99B765C12F929B87002C01B9 = {
+						CreatedOnToolsVersion = 26.4;
+					};
+					99B765D02F929B89002C01B9 = {
+						CreatedOnToolsVersion = 26.4;
+						TestTargetID = 99B765C12F929B87002C01B9;
+					};
+					99B765DA2F929B89002C01B9 = {
+						CreatedOnToolsVersion = 26.4;
+						TestTargetID = 99B765C12F929B87002C01B9;
 					};
 				};
 			};
@@ -109,12 +307,44 @@
 			projectRoot = "";
 			targets = (
 				99B765902F928C07002C01B9 /* DeckMate */,
+				99B765BC2F929B87002C01B9 /* DeckMateWatch */,
+				99B765C12F929B87002C01B9 /* DeckMateWatch Watch App */,
+				99B765D02F929B89002C01B9 /* DeckMateWatch Watch AppTests */,
+				99B765DA2F929B89002C01B9 /* DeckMateWatch Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		99B7658F2F928C07002C01B9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		99B765BB2F929B87002C01B9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		99B765C02F929B87002C01B9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		99B765CF2F929B89002C01B9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		99B765D92F929B89002C01B9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -131,7 +361,46 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		99B765BE2F929B87002C01B9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		99B765CD2F929B89002C01B9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		99B765D72F929B89002C01B9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		99B765C52F929B88002C01B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 99B765C12F929B87002C01B9 /* DeckMateWatch Watch App */;
+			targetProxy = 99B765C42F929B88002C01B9 /* PBXContainerItemProxy */;
+		};
+		99B765D32F929B89002C01B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 99B765C12F929B87002C01B9 /* DeckMateWatch Watch App */;
+			targetProxy = 99B765D22F929B89002C01B9 /* PBXContainerItemProxy */;
+		};
+		99B765DD2F929B89002C01B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 99B765C12F929B87002C01B9 /* DeckMateWatch Watch App */;
+			targetProxy = 99B765DC2F929B89002C01B9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		99B7659A2F928C09002C01B9 /* Debug */ = {
@@ -334,6 +603,192 @@
 			};
 			name = Release;
 		};
+		99B765E42F929B89002C01B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = DeckMateWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.helmlog.deckmate.watch.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug;
+		};
+		99B765E52F929B89002C01B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = DeckMateWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.helmlog.deckmate.watch.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Release;
+		};
+		99B765E82F929B89002C01B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_KEY_CFBundleDisplayName = DeckMateWatch;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.helmlog.deckmate.watch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		99B765E92F929B89002C01B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_KEY_CFBundleDisplayName = DeckMateWatch;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.helmlog.deckmate.watch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		99B765EB2F929B89002C01B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.helmlog.DeckMateWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DeckMateWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DeckMateWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug;
+		};
+		99B765EC2F929B89002C01B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.helmlog.DeckMateWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DeckMateWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DeckMateWatch Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Release;
+		};
+		99B765EE2F929B89002C01B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.helmlog.DeckMateWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "DeckMateWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug;
+		};
+		99B765EF2F929B89002C01B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.helmlog.DeckMateWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "DeckMateWatch Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -355,6 +810,42 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		99B765E32F929B89002C01B9 /* Build configuration list for PBXNativeTarget "DeckMateWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				99B765E42F929B89002C01B9 /* Debug */,
+				99B765E52F929B89002C01B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		99B765E72F929B89002C01B9 /* Build configuration list for PBXNativeTarget "DeckMateWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				99B765E82F929B89002C01B9 /* Debug */,
+				99B765E92F929B89002C01B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		99B765EA2F929B89002C01B9 /* Build configuration list for PBXNativeTarget "DeckMateWatch Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				99B765EB2F929B89002C01B9 /* Debug */,
+				99B765EC2F929B89002C01B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		99B765ED2F929B89002C01B9 /* Build configuration list for PBXNativeTarget "DeckMateWatch Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				99B765EE2F929B89002C01B9 /* Debug */,
+				99B765EF2F929B89002C01B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -367,6 +858,11 @@
 /* Begin XCSwiftPackageProductDependency section */
 		99B765A02F929056002C01B9 /* DeckMateKit */ = {
 			isa = XCSwiftPackageProductDependency;
+			productName = DeckMateKit;
+		};
+		99B765F12F929F62002C01B9 /* DeckMateKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 99B7659F2F929056002C01B9 /* XCLocalSwiftPackageReference "../packages/DeckMateKit" */;
 			productName = DeckMateKit;
 		};
 /* End XCSwiftPackageProductDependency section */
