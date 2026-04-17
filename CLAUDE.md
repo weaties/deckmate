@@ -2,18 +2,25 @@
 
 ## Project Overview
 
-Native Apple clients — **Mac, iPhone, iPad** — for [HelmLog](../helmlog), a
-Raspberry-Pi sailing data logger. The server (`../helmlog`) captures Signal K
-/ NMEA 2000 instrument data, stores it in SQLite, and exposes a FastAPI API;
-this repo is the client that talks to it.
+Native Apple clients — **Mac, iPhone, iPad, Apple Vision Pro, Apple Watch** —
+for [HelmLog](../helmlog), a Raspberry-Pi sailing data logger. The server
+(`../helmlog`) captures Signal K / NMEA 2000 instrument data, stores it in
+SQLite, and exposes a FastAPI API; this repo is the client that talks to it.
 
-v0.1 is two complementary surfaces in one app:
+v0.1 has four surfaces, each sized to the device it runs on:
 
-1. **History browser** — list sessions, replay tracks on MapKit, show polars
-   and linked video, scrub debrief audio and transcripts.
-2. **Live race view** — live TWS / TWA / BSP / SOG / COG from the boat's
-   Signal K WebSocket (via a HelmLog relay endpoint); start/stop sessions;
-   drop race marks with one tap.
+1. **History browser** (iOS / Mac) — list sessions, replay tracks on MapKit,
+   show polars and linked video, scrub debrief audio and transcripts.
+2. **Live race view** (iOS / Mac) — live TWS / TWA / BSP / SOG / COG from
+   the boat's Signal K WebSocket (via a HelmLog relay endpoint); start/stop
+   sessions; drop race marks with one tap.
+3. **Immersive replay** (visionOS) — past sessions replayed as a RealityKit
+   scene: the track is a ribbon in space, wind arrows and marks anchor to
+   world coordinates, time is scrubbed from a 2D window palette.
+4. **Wrist control** (watchOS, *independent* — not a phone companion) —
+   start/stop sessions and drop race marks from the wrist. Talks directly
+   to the HelmLog server over wifi / cellular, using the same
+   `DeckMateKit.APIClient` as every other target.
 
 This project is also deliberately a **learning exercise** for the author to
 get familiar with native Apple development (Swift, SwiftUI, Xcode, Swift
@@ -35,8 +42,11 @@ to fill in as they learn the stack.
 | Dependency injection | Constructor injection; `@Environment` for SwiftUI composition |
 | Local persistence | `SwiftData` (preferred) or file-backed `Codable` JSON for small caches |
 | Maps | **MapKit** (`Map`, `MapPolyline`) — tracks rendered as `MKPolyline` overlays |
+| 3D / immersive | **RealityKit** + `ImmersiveSpace` (visionOS) — track ribbons, wind arrows, marks as `Entity`s |
+| Watch haptics | `WKInterfaceDevice.play(_:)` (`.click`, `.success`, `.notification`) for mark-drop feedback |
+| Complications | **WidgetKit** timelines on watchOS (e.g. "session running 01:23") |
 | Keychain | `Security.framework` via a thin `KeychainStore` wrapper (in `DeckMateAuth`) |
-| Biometrics | `LocalAuthentication` (Face ID / Touch ID) — for unlocking stored credentials |
+| Biometrics | `LocalAuthentication` (Face ID / Touch ID) — iOS / macOS / visionOS only; on watchOS gate by device passcode instead |
 | HTTP | `URLSession` with `async`/`await` — no Alamofire |
 | WebSocket | `URLSessionWebSocketTask` — used for the live Signal K relay |
 | JSON | `Codable` with custom `JSONDecoder.keyDecodingStrategy = .convertFromSnakeCase` |
@@ -64,10 +74,21 @@ deckmate/
 │   │   ├── Features/          # feature-organised screens (History/, Live/, Settings/)
 │   │   ├── Resources/         # Assets.xcassets, Info.plist, entitlements
 │   │   └── README.md
-│   └── DeckMateMac/            # macOS app (shares Features/ via Swift package where possible)
+│   ├── DeckMateMac/            # macOS app (shares Features/ via Swift package where possible)
+│   │   ├── App/
+│   │   ├── Features/
+│   │   ├── Resources/
+│   │   └── README.md
+│   ├── DeckMateVision/         # visionOS — immersive session replay (RealityKit + ImmersiveSpace)
+│   │   ├── App/
+│   │   ├── Features/          # History/, Immersive/, Settings/
+│   │   ├── Resources/
+│   │   └── README.md
+│   └── DeckMateWatch/          # watchOS — independent session management (not a phone companion)
 │       ├── App/
-│       ├── Features/
+│       ├── Features/          # Session/, Marks/, Settings/
 │       ├── Resources/
+│       ├── Complications/     # WidgetKit timelines
 │       └── README.md
 │
 ├── packages/
@@ -248,6 +269,21 @@ Never commit signing assets, `.env`, `.mobileprovision`, or `AuthKey_*.p8`.
   implementation is a simple bearer token stored in the Keychain, optionally
   gated by biometrics. `SignInWithAppleAuthStore`, `MagicLinkAuthStore`, and
   `DevicePairingAuthStore` all slot in behind the same protocol.
+- **Five targets, one brain.** `DeckMateKit` builds for iOS, macOS, visionOS,
+  and watchOS. A view-model written once drives the iPhone list, the Mac
+  sidebar, the Vision Pro 2D window, *and* the Watch screen. When a platform
+  can't support an API (e.g. `LocalAuthentication` on watchOS, `MapKit` on
+  watchOS), guard with `#if os(...)` inside the kit — apps should not need
+  to know.
+- **Watch is independent, not a companion.** `DeckMateWatch` hits the HelmLog
+  server directly via `APIClient`; it does **not** depend on
+  `WatchConnectivity` or on the iPhone app being reachable. This keeps the
+  watch useful on a boat where the phone is below deck.
+- **Vision Pro separates 2D chrome from immersive content.** The session
+  picker and scrubber are a standard SwiftUI window; the replay is an
+  `ImmersiveSpace` driven by a `ReplayViewModel` in `DeckMateKit`.
+  Coordinate projection (WGS84 → scene-space metres, origin at track
+  centroid) lives in the kit so it is unit-testable without RealityKit.
 
 ---
 
@@ -369,9 +405,9 @@ This lets you develop the live UI at your desk without a boat.
 
 | Tier | Modules | Blast radius | Verification |
 |---|---|---|---|
-| **Critical** | `DeckMateAuth` (Keychain, biometrics, token exchange), URL handling of deep links, any code that signs or validates requests | Credential compromise, account takeover | TDD + fake-keychain tests + manual security review + `/data-license` where peer data is involved |
-| **High** | `DeckMateAPI` (error handling, cancellation, retry), live data stream code, on-device caches of PII (audio, transcripts) | Silent data loss, showing stale / wrong numbers during racing, PII retention bugs | TDD + fixture-based tests + manual on-water smoke |
-| **Standard** | SwiftUI screens, MapKit overlays, charts, SettingsView, History filters | Wrong-looking UI, confusing UX | TDD (ViewModel) + preview + `/pr-checklist` |
+| **Critical** | `DeckMateAuth` (Keychain, biometrics, token exchange), URL handling of deep links, any code that signs or validates requests, watchOS mark-drop path (quiet failure during a race is worse than a crash) | Credential compromise, account takeover, lost mark at a crucial moment | TDD + fake-keychain tests + manual security review + `/data-license` where peer data is involved |
+| **High** | `DeckMateAPI` (error handling, cancellation, retry), live data stream code, on-device caches of PII (audio, transcripts), RealityKit coordinate projection for immersive replay | Silent data loss, showing stale / wrong numbers during racing, PII retention bugs, mis-placed track in 3D | TDD + fixture-based tests + manual on-water smoke |
+| **Standard** | SwiftUI screens, MapKit overlays, charts, SettingsView, History filters, RealityKit entity wiring, WidgetKit complications | Wrong-looking UI, confusing UX | TDD (ViewModel) + preview + `/pr-checklist` |
 | **Low** | Assets, strings, README, scripts, CI config | Visual / non-functional | Smoke check |
 
 A PR's tier is the **highest** tier of any file it touches. New modules

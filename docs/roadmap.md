@@ -8,8 +8,10 @@ Checked items are complete.
 
 ### Foundations
 - [x] Repo structure, CLAUDE.md, skills, Swift package skeleton
-- [ ] Xcode project + workspace created with `DeckMateiOS`, `DeckMateMac` targets
-- [ ] `DeckMateKit` added as a local package dependency to both apps
+- [x] `DeckMateKit` supports iOS 17 / macOS 14 / visionOS 1 / watchOS 10
+- [ ] Xcode project + workspace created with `DeckMateiOS`, `DeckMateMac`,
+      `DeckMateVision`, `DeckMateWatch` targets
+- [ ] `DeckMateKit` added as a local package dependency to all four apps
 - [ ] `swift build` and `swift test` green in CI
 
 ### Auth
@@ -35,13 +37,40 @@ Checked items are complete.
 - [ ] Replay mode in `DeckMateAPI` — play a recorded JSONL of ticks
 
 ### Ship-gate
-- [ ] First TestFlight build (both iOS and Mac)
+- [ ] First TestFlight build (iOS + Mac)
 - [ ] Crew invited to TestFlight
 - [ ] Feedback loop established
 
 ---
 
-## v0.2 — Offline-friendly cache
+## v0.2 — Wrist control (watchOS)
+
+- [ ] `SessionController` state machine in `DeckMateKit` (testable without a watch)
+  - States: `idle → starting → running → stopping → idle`; errors as surfaced side-state
+- [ ] `DeckMateAuth`: `#if !os(watchOS)` guards on `LocalAuthentication`; watchOS uses passcode-scoped Keychain
+- [ ] `DeckMateWatch` app scaffold: `SessionView`, `MarksView`, one-tap mark drop with haptic
+- [ ] Optimistic UI for mark drop: haptic → local counter bump → fire → reconcile on failure
+- [ ] WidgetKit complication: "session running 01:23" with timeline provider
+- [ ] Watch-only smoke test: start → drop 3 marks → stop, with airplane mode flipped mid-run
+- [ ] TestFlight build for watchOS (independent upload, not companion)
+
+---
+
+## v0.3 — Immersive replay (visionOS)
+
+- [ ] `ReplayViewModel` + `TickCursor` in `DeckMateKit` (playback state machine, time-indexed cursor)
+- [ ] WGS84 → scene-space projection in `DeckMateKit` with unit tests (no RealityKit import)
+- [ ] `DeckMateVision` app scaffold: 2D `WindowGroup` (session picker + scrubber) + `ImmersiveSpace` stub
+- [ ] Track ribbon entity: extruded `MeshResource` coloured by speed-over-ground
+- [ ] Wind-arrow entities: one per tick, orientation from TWD, length from TWS
+- [ ] Mark entities: sphere anchors, labelled with the mark name
+- [ ] Scrubber ↔ immersive scene sync via the shared `ReplayViewModel`
+- [ ] `/data-license` review — embargo rendering + no-export affordances on peer sessions
+- [ ] TestFlight build for visionOS
+
+---
+
+## v0.4 — Offline-friendly cache
 
 - [ ] SwiftData schema for cached sessions + tracks
 - [ ] Stale-while-revalidate in `HistoryViewModel`

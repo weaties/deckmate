@@ -1,7 +1,7 @@
 # DeckMate
 
-Native Apple clients (Mac, iPhone, iPad) for [HelmLog](../helmlog), the
-Raspberry-Pi sailing data logger.
+Native Apple clients (Mac, iPhone, iPad, Apple Vision Pro, Apple Watch)
+for [HelmLog](../helmlog), the Raspberry-Pi sailing data logger.
 
 ## What's in the repo
 
@@ -9,7 +9,9 @@ Raspberry-Pi sailing data logger.
 deckmate/
 ├── apps/
 │   ├── DeckMateiOS/      # iPhone + iPad universal app target
-│   └── DeckMateMac/      # macOS app target
+│   ├── DeckMateMac/      # macOS app target
+│   ├── DeckMateVision/   # visionOS app target — immersive session replay
+│   └── DeckMateWatch/    # watchOS app target — session management from the wrist
 ├── packages/
 │   └── DeckMateKit/      # Shared Swift package: models, API client, auth
 ├── docs/                # Architecture, API notes, roadmap
@@ -20,8 +22,10 @@ deckmate/
 
 ## v0.1 scope
 
-- **History browser** — list sessions, replay tracks on MapKit, see polars and linked video
-- **Live race view** — TWS / TWA / BSP from Signal K; session start/stop; mark drops
+- **History browser** (iOS / Mac) — list sessions, replay tracks on MapKit, see polars and linked video
+- **Live race view** (iOS / Mac) — TWS / TWA / BSP from Signal K; session start/stop; mark drops
+- **Immersive replay** (visionOS) — past sessions replayed as a RealityKit scene
+- **Wrist control** (watchOS) — start/stop session, drop a mark with one tap
 
 ## Getting started
 
