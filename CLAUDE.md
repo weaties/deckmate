@@ -68,28 +68,18 @@ deckmate/
 ├── README.md
 ├── .gitignore
 │
-├── apps/                      # app targets (thin; business logic lives in DeckMateKit)
-│   ├── DeckMateiOS/            # iPhone + iPad universal SwiftUI app
-│   │   ├── App/               # @main App, SceneDelegate-equivalent
-│   │   ├── Features/          # feature-organised screens (History/, Live/, Settings/)
-│   │   ├── Resources/         # Assets.xcassets, Info.plist, entitlements
-│   │   └── README.md
-│   ├── DeckMateMac/            # macOS app (shares Features/ via Swift package where possible)
-│   │   ├── App/
-│   │   ├── Features/
-│   │   ├── Resources/
-│   │   └── README.md
-│   ├── DeckMateVision/         # visionOS — immersive session replay (RealityKit + ImmersiveSpace)
-│   │   ├── App/
-│   │   ├── Features/          # History/, Immersive/, Settings/
-│   │   ├── Resources/
-│   │   └── README.md
-│   └── DeckMateWatch/          # watchOS — independent session management (not a phone companion)
-│       ├── App/
-│       ├── Features/          # Session/, Marks/, Settings/
-│       ├── Resources/
-│       ├── Complications/     # WidgetKit timelines
-│       └── README.md
+├── DeckMate/                   # Xcode project — holds all app targets
+│   ├── DeckMate.xcodeproj
+│   ├── DeckMate/               # main multiplatform target: iOS, iPad, macOS, visionOS
+│   │   ├── DeckMateApp.swift   # @main App entry point
+│   │   ├── ContentView.swift
+│   │   ├── Assets.xcassets
+│   │   └── Features/           # History/, Live/, Settings/, Immersive/ (visionOS-only)
+│   │                           #   — shared files with `#if os(...)` where behaviour diverges
+│   └── DeckMateWatch/          # watchOS target — independent app, separate process
+│       ├── DeckMateWatchApp.swift
+│       ├── Features/           # Session/, Marks/, Settings/
+│       └── Complications/      # WidgetKit timelines
 │
 ├── packages/
 │   └── DeckMateKit/            # the shared Swift package — most of the code lives here
@@ -105,8 +95,10 @@ deckmate/
 │           └── DeckMateAuthTests/
 │
 ├── docs/
-│   ├── architecture.md        # how apps/, DeckMateKit, and the server fit together
-│   ├── api-endpoints.md       # the server routes the client consumes
+│   ├── architecture.md         # how the Xcode project, DeckMateKit, and the server fit together
+│   ├── api-endpoints.md        # the server routes the client consumes
+│   ├── visionos-design.md      # immersive-replay design notes (scene shape, coord projection)
+│   ├── watchos-design.md       # watch design notes (independent, no LocalAuthentication, optimistic UI)
 │   └── roadmap.md
 │
 └── .claude/
@@ -123,9 +115,14 @@ deckmate/
         └── testflight.md
 ```
 
-> **Xcode project:** the `.xcodeproj` / `.xcworkspace` is created once via Xcode
-> GUI (see `apps/README.md`). We intentionally don't generate it from YAML —
-> part of the goal is to learn how Xcode project files are actually structured.
+> **Xcode project:** the `.xcodeproj` is created once via Xcode GUI. We
+> intentionally don't generate it from YAML — part of the goal is to learn
+> how Xcode project files are actually structured. The project lives at
+> `DeckMate/DeckMate.xcodeproj`; Xcode's default layout wraps the project in
+> a folder of its own name, which is why there's a nested `DeckMate/DeckMate/`.
+> One multiplatform target covers iPhone / iPad / Mac / Vision Pro;
+> watchOS is a sibling target in the same project (watch apps must run
+> their own process).
 
 ---
 
@@ -139,16 +136,24 @@ swift test                     # run all XCTest / Swift Testing suites
 swift test --filter DeckMateModelsTests  # target one module
 
 # Xcode
-open DeckMate.xcworkspace # open the project
-xcodebuild -workspace DeckMate.xcworkspace \
-           -scheme DeckMateiOS -destination 'platform=iOS Simulator,name=iPhone 15' \
-           build test          # headless build + test
+open DeckMate/DeckMate.xcodeproj    # open in Xcode
+
+# Headless build for each destination (CI-friendly)
+xcodebuild -project DeckMate/DeckMate.xcodeproj \
+           -scheme DeckMate -destination 'platform=iOS Simulator,name=iPhone 15' \
+           build test
+xcodebuild -project DeckMate/DeckMate.xcodeproj \
+           -scheme DeckMate -destination 'platform=macOS' \
+           build test
+xcodebuild -project DeckMate/DeckMate.xcodeproj \
+           -scheme DeckMateWatch -destination 'platform=watchOS Simulator,name=Apple Watch Series 10 (46mm)' \
+           build test
 
 # Lint / format
-swiftlint                      # check
-swiftlint --fix                # auto-fix safe rules
-swift-format format -i -r apps packages    # format in place
-swift-format lint  -r apps packages        # format check (CI)
+swiftlint                               # check
+swiftlint --fix                         # auto-fix safe rules
+swift-format format -i -r DeckMate packages    # format in place
+swift-format lint  -r DeckMate packages        # format check (CI)
 ```
 
 ---
@@ -269,12 +274,15 @@ Never commit signing assets, `.env`, `.mobileprovision`, or `AuthKey_*.p8`.
   implementation is a simple bearer token stored in the Keychain, optionally
   gated by biometrics. `SignInWithAppleAuthStore`, `MagicLinkAuthStore`, and
   `DevicePairingAuthStore` all slot in behind the same protocol.
-- **Five targets, one brain.** `DeckMateKit` builds for iOS, macOS, visionOS,
-  and watchOS. A view-model written once drives the iPhone list, the Mac
-  sidebar, the Vision Pro 2D window, *and* the Watch screen. When a platform
-  can't support an API (e.g. `LocalAuthentication` on watchOS, `MapKit` on
-  watchOS), guard with `#if os(...)` inside the kit — apps should not need
-  to know.
+- **Two Xcode targets, five destinations, one brain.** The main `DeckMate`
+  target is a SwiftUI multiplatform target that builds for iOS, iPad,
+  macOS, and visionOS from one set of source files; `DeckMateWatch` is a
+  sibling target for watchOS (required because the watch runs its own
+  process). Both targets depend on `DeckMateKit`. A view-model written
+  once drives the iPhone list, the Mac sidebar, the Vision Pro 2D window,
+  *and* the Watch screen. When a platform can't support an API (e.g.
+  `LocalAuthentication` on watchOS, `MapKit` on watchOS), guard with
+  `#if os(...)` inside the kit — targets should not need to know.
 - **Watch is independent, not a companion.** `DeckMateWatch` hits the HelmLog
   server directly via `APIClient`; it does **not** depend on
   `WatchConnectivity` or on the iPhone app being reachable. This keeps the
@@ -345,8 +353,9 @@ co-op data.
 - Apply the `in-progress` label when starting work on an issue.
 - Follow TDD — `swift test` loop inside `DeckMateKit` first; UI after.
 - Run `swiftlint`, `swift-format lint`, and the Xcode build+test before opening a PR.
-- Keep `apps/*` thin — move logic into `DeckMateKit` unless it is inherently
-  view-shaped (animation, layout, gesture).
+- Keep the Xcode targets under `DeckMate/` thin — move logic into
+  `DeckMateKit` unless it is inherently view-shaped (animation, layout,
+  gesture, RealityKit entity wiring, watch haptics).
 - Log with `os.Logger`, one subsystem per module.
 - Use `Codable` for every type that crosses an API or persistence boundary.
 - Store secrets in the Keychain via `DeckMateAuth.KeychainStore` — never in
@@ -359,7 +368,7 @@ co-op data.
 - Don't use `print()` for operational output; use `os.Logger`.
 - Don't pull in a third-party dependency without proposing it in an issue
   first — we are trying to stay close to Apple frameworks on purpose.
-- Don't put business logic in `apps/` that should live in `DeckMateKit`.
+- Don't put business logic in the Xcode targets that should live in `DeckMateKit`.
 - Don't call `URLSession` from a SwiftUI view; go through an `APIClient`.
 - Don't render peer (co-op) data with export affordances — violates policy.
 - Don't force-unwrap (`!`) in shipping code without a documented invariant.
@@ -384,7 +393,7 @@ behaviour, ViewModel state machines.
 - **DeckMateAuthTests** — fake `KeychainStore` and `BiometricEvaluator`
   protocols; no actual Keychain touching in tests.
 
-### App / UI tests — `apps/*/Tests/`
+### App / UI tests — `DeckMate/DeckMateTests/` and `DeckMate/DeckMateUITests/`
 
 Reserve **XCUITest** for critical user flows only — logging in, replaying a
 track, dropping a mark under bad network conditions. They are slow and

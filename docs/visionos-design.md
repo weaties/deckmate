@@ -1,19 +1,10 @@
-# DeckMateVision
+# visionOS — Immersive session replay
 
-Apple Vision Pro (visionOS) app target — **immersive session replay**.
-
-Placeholder until the Xcode target is created (see `../README.md`). The
-folder layout inside this directory will be:
-
-```
-App/           # @main DeckMateVisionApp.swift, scene setup
-Features/
-  History/     # 2D window: session list, picker, scrubber controls
-  Immersive/   # ImmersiveSpace: RealityKit scene for track replay
-  Settings/    # Server URL, auth (shared UI with iOS where possible)
-Resources/     # Assets.xcassets, Info.plist, entitlements
-Tests/         # XCUITest for critical flows only
-```
+Design notes for the visionOS destination. The visionOS app ships as
+part of the shared `DeckMate` multiplatform target — it is not a
+separate Xcode target — so the files described here live alongside the
+iOS/Mac code and are gated by `#if os(visionOS)` where the behaviour
+diverges.
 
 ## The immersive idea
 
@@ -25,7 +16,8 @@ difference is the renderer, not the data.
 
 ## Scene shape
 
-- **Main window** (standard SwiftUI) — session list + scrubber + play controls.
+- **Main window** (standard SwiftUI `WindowGroup`) — session list +
+  scrubber + play controls. Identical to the iPad layout.
 - **ImmersiveSpace** — a RealityKit `Entity` hierarchy driven by a
   `ReplayViewModel` (in `DeckMateKit`) that advances the current time
   index and publishes `(position, heading, TWS, TWA)` tuples. The entity
@@ -33,10 +25,14 @@ difference is the renderer, not the data.
 
 ## What lives where
 
-- **DeckMateKit** (testable) — `ReplayViewModel`, time-indexed `TickCursor`,
-  coordinate projection (lat/lon → scene-space metres), playback state machine.
-- **This target** — the `RealityView`, entity wiring, gesture handlers,
-  SwiftUI chrome for the 2D window. Keep it presentational.
+- **`DeckMateKit`** (testable, no RealityKit dependency) — `ReplayViewModel`,
+  time-indexed `TickCursor`, coordinate projection (lat/lon → scene-space
+  metres), playback state machine.
+- **Main app target, visionOS-only files** — the `RealityView`, entity
+  wiring, gesture handlers, SwiftUI chrome for the 2D window. Keep it
+  presentational. Wrap files that import RealityKit in
+  `#if os(visionOS)` so the same target still compiles cleanly on iOS
+  and macOS.
 
 ## Things to watch
 

@@ -30,20 +30,24 @@ App Store submission is out of scope.
 1. Decide the version + build number:
    - User-visible version bumps in `Info.plist` → `CFBundleShortVersionString`.
    - `CFBundleVersion` increments monotonically, e.g. `git rev-list --count HEAD`.
-2. From the repo root:
+2. From the repo root (the multiplatform target archives once per
+   platform; watchOS has its own scheme):
    ```bash
-   # iOS
-   xcodebuild -workspace DeckMate.xcworkspace \
-              -scheme DeckMateiOS \
+   # iOS archive from the multiplatform scheme
+   xcodebuild -project DeckMate/DeckMate.xcodeproj \
+              -scheme DeckMate \
               -configuration Release \
               -destination 'generic/platform=iOS' \
-              -archivePath build/DeckMateiOS.xcarchive \
+              -archivePath build/DeckMate-iOS.xcarchive \
               archive
 
    xcodebuild -exportArchive \
-              -archivePath build/DeckMateiOS.xcarchive \
-              -exportOptionsPlist apps/DeckMateiOS/ExportOptions.plist \
-              -exportPath build/DeckMateiOS-ipa
+              -archivePath build/DeckMate-iOS.xcarchive \
+              -exportOptionsPlist DeckMate/ExportOptions.plist \
+              -exportPath build/DeckMate-iOS-ipa
+
+   # Repeat for generic/platform=macOS, generic/platform=visionOS,
+   # and generic/platform=watchOS (the last uses -scheme DeckMateWatch).
    ```
 3. Upload with `xcrun altool` (fallback) or preferably `xcrun notarytool`
    /`xcrun iTMSTransporter` — Xcode Organizer "Distribute App" is the

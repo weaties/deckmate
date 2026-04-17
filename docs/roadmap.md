@@ -9,9 +9,11 @@ Checked items are complete.
 ### Foundations
 - [x] Repo structure, CLAUDE.md, skills, Swift package skeleton
 - [x] `DeckMateKit` supports iOS 17 / macOS 14 / visionOS 1 / watchOS 10
-- [ ] Xcode project + workspace created with `DeckMateiOS`, `DeckMateMac`,
-      `DeckMateVision`, `DeckMateWatch` targets
-- [ ] `DeckMateKit` added as a local package dependency to all four apps
+- [x] `DeckMate.xcodeproj` with multiplatform `DeckMate` target
+      (iPhone / iPad / Mac / Vision Pro)
+- [x] `DeckMateKit` added as a local package dependency, `import DeckMateKit`
+      compiles, "Hello, world!" launches on Mac
+- [ ] `DeckMateWatch` target added to the same project
 - [ ] `swift build` and `swift test` green in CI
 
 ### Auth

@@ -7,10 +7,12 @@ users: see `CLAUDE.md` for Claude-specific skills and workflows.
 
 ## Project Overview
 
-Native Apple clients (Mac, iPhone, iPad) for the HelmLog sailing data logger
-server at `../helmlog`. SwiftUI + Swift Package Manager; single Xcode
-workspace with `DeckMateiOS` (universal) and `DeckMateMac` app targets and a
-shared Swift package `DeckMateKit`.
+Native Apple clients (Mac, iPhone, iPad, Apple Vision Pro, Apple Watch) for
+the HelmLog sailing data logger server at `../helmlog`. SwiftUI + Swift
+Package Manager; one Xcode project at `DeckMate/DeckMate.xcodeproj` with a
+**`DeckMate`** multiplatform target (iPhone / iPad / Mac / Vision Pro) and
+a sibling **`DeckMateWatch`** target (watchOS). Both depend on a shared
+Swift package `DeckMateKit`.
 
 **Stack:** Swift 5.10+, SwiftUI, Swift Package Manager, XCTest / Swift
 Testing, SwiftLint, swift-format, Xcode 15+.
@@ -27,12 +29,16 @@ swift test
 
 # Lint / format
 swiftlint
-swift-format lint -r apps packages
+swift-format lint -r DeckMate packages
 
 # App build + test (from repo root)
-xcodebuild -workspace DeckMate.xcworkspace \
-           -scheme DeckMateiOS \
+xcodebuild -project DeckMate/DeckMate.xcodeproj \
+           -scheme DeckMate \
            -destination 'platform=iOS Simulator,name=iPhone 15' \
+           build test
+xcodebuild -project DeckMate/DeckMate.xcodeproj \
+           -scheme DeckMateWatch \
+           -destination 'platform=watchOS Simulator,name=Apple Watch Series 10 (46mm)' \
            build test
 ```
 
@@ -44,14 +50,15 @@ All checks — `swift test`, `swiftlint`, `swift-format lint`, Xcode build+test
 ## Project Structure
 
 ```
-apps/DeckMateiOS/          # iPhone + iPad app target (thin — views only)
-apps/DeckMateMac/          # macOS app target
-packages/DeckMateKit/      # shared package (models, API, auth, view models)
-docs/                     # architecture, API notes, roadmap
-.claude/skills/           # workflow skills
+DeckMate/DeckMate.xcodeproj         # Xcode project
+DeckMate/DeckMate/                  # multiplatform target (iOS, iPad, macOS, visionOS)
+DeckMate/DeckMateWatch/             # watchOS target (independent app, not a companion)
+packages/DeckMateKit/               # shared package (models, API, auth, view models)
+docs/                               # architecture, API notes, roadmap, platform design notes
+.claude/skills/                     # workflow skills
 ```
 
-Business logic lives in `DeckMateKit`. Apps are the skin.
+Business logic lives in `DeckMateKit`. Targets are the skin.
 
 ---
 
@@ -94,7 +101,7 @@ Business logic lives in `DeckMateKit`. Apps are the skin.
 
 - Push directly to `main` — PRs only.
 - `print()` anywhere — use `os.Logger`.
-- Put business logic in `apps/` that belongs in `DeckMateKit`.
+- Put business logic in the Xcode targets that belongs in `DeckMateKit`.
 - Call `URLSession` from a SwiftUI view.
 - Store credentials in `UserDefaults` — Keychain only.
 - Ship a peer / co-op data screen with an "Export" affordance

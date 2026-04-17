@@ -10,8 +10,10 @@ Create a new feature screen with the full shape this repo expects:
 - **ViewModel** in `packages/DeckMateKit/Sources/DeckMateKit/ViewModels/` (or a
   dedicated module if the feature is big) — `@Observable`, pure Swift,
   testable with `swift test`.
-- **SwiftUI `View`** in `apps/DeckMateiOS/Features/<Feature>/` (and a Mac
-  variant if the UX differs meaningfully).
+- **SwiftUI `View`** in `DeckMate/DeckMate/Features/<Feature>/` (or
+  `DeckMate/DeckMateWatch/Features/<Feature>/` for wrist-only screens).
+  Use `#if os(macOS)` / `os(visionOS)` inside the file when the UX
+  differs meaningfully by destination.
 - **`#Preview`** covering `loading`, `loaded`, and `error` states.
 - **Unit test** on the ViewModel — no simulator needed.
 

@@ -4,9 +4,10 @@
 
 ```
 ┌──────────────────────────────────────────────┐   HTTPS / WS   ┌───────────────────────┐
-│  Apps (skin)                                 │ ─────────────▶ │  HelmLog server       │
-│  DeckMateiOS      DeckMateVision (visionOS)   │                │  (../helmlog, Pi)     │
-│  DeckMateMac      DeckMateWatch   (watchOS)   │                │  FastAPI + SQLite     │
+│  Xcode targets (skin)                        │ ─────────────▶ │  HelmLog server       │
+│                                              │                │  (../helmlog, Pi)     │
+│  DeckMate       (iOS / iPad / macOS / vision)│                │  FastAPI + SQLite     │
+│  DeckMateWatch  (watchOS, separate process)  │                │                       │
 └──────────────────────┬───────────────────────┘                └───────────────────────┘
                        │ imports
                        ▼
@@ -26,23 +27,29 @@
 └─────────────────────────────────────────┘
 ```
 
-All four apps talk to the server directly. The watch is **independent**,
-not a companion — it does not rely on WatchConnectivity or on the iPhone
-app being reachable.
+Both targets talk to the server directly. The watch is **independent**,
+not a companion — it does not rely on `WatchConnectivity` or on the
+iPhone app being reachable.
 
-### Apps (thin)
+### Targets (thin)
 
-Four app targets, all calling into `DeckMateKit` for behaviour and using
-it for state:
+Two Xcode targets inside `DeckMate.xcodeproj`, both depending on
+`DeckMateKit` and using it for state:
 
-- **DeckMateiOS** — iPhone + iPad, primary everyday surface (history + live).
-- **DeckMateMac** — desktop debriefs; bigger windows, split view.
-- **DeckMateVision** — Apple Vision Pro. 2D window for session picker +
-  scrubber, plus an `ImmersiveSpace` that renders the session as a
-  RealityKit scene (track ribbon, wind arrows, marks in world space).
-- **DeckMateWatch** — Apple Watch, standalone. Start / stop sessions and
+- **`DeckMate`** (multiplatform) — one target, one set of source files,
+  four destinations: iPhone, iPad, Mac, and Apple Vision Pro. Apple's
+  modern multiplatform idiom: SwiftUI code is shared, and anything that
+  needs to differ by destination is wrapped in
+  `#if os(iOS) / os(macOS) / os(visionOS)`.
+  - On iOS / iPad: tab-bar layout, primary everyday surface (history + live).
+  - On macOS: `NavigationSplitView`, bigger windows, keyboard shortcuts.
+  - On visionOS: standard 2D window for the session picker + scrubber,
+    plus an `ImmersiveSpace` that renders the session as a RealityKit
+    scene (track ribbon, wind arrows, marks in world space).
+- **`DeckMateWatch`** (watchOS) — standalone. Start / stop sessions and
   drop race marks from the wrist; no map, no live numbers (screen too
-  small, battery too precious).
+  small, battery too precious). See `watchos-design.md` for why the
+  watch is independent rather than a phone companion.
 
 Each target contains SwiftUI views, asset catalogs, `Info.plist`,
 entitlements, and the `@main` App type. They import `DeckMateKit` and
@@ -80,12 +87,14 @@ we consume.
 - **Pluggable auth.** Auth mechanisms will change (magic link → Sign in
   with Apple → biometric-gated bearer token). The `AuthStore` protocol
   means views never care which one is active.
-- **Four apps, one brain.** iOS / macOS / visionOS / watchOS targets
-  differ wildly in UI idiom (tab bar, split view, `ImmersiveSpace`, wrist
-  list) but consume identical view-model state. Move anything shareable
-  into `DeckMateKit`. When a platform can't support an API, the kit
-  `#if os(...)`-guards the platform-specific bits instead of forcing the
-  app to know.
+- **Five destinations, one brain.** The iOS / iPad / macOS / visionOS
+  destinations (all served by the one `DeckMate` multiplatform target)
+  and the separate `DeckMateWatch` target differ wildly in UI idiom
+  (tab bar, split view, `ImmersiveSpace`, wrist list) but consume
+  identical view-model state. Move anything shareable into
+  `DeckMateKit`. When a platform can't support an API, the kit
+  `#if os(...)`-guards the platform-specific bits instead of forcing
+  the target to know.
 
 ## SwiftUI layering
 
@@ -93,8 +102,9 @@ Each feature screen comes in three pieces:
 
 1. **Model type** (in `DeckMateKit`) — plain `struct` or `actor` with state
    and pure methods. Tests are XCTest.
-2. **SwiftUI `View`** (in `apps/…/Features/…`) — observes the model type
-   via `@State` + `@Observable`, renders state, fires intents.
+2. **SwiftUI `View`** (in `DeckMate/DeckMate/Features/…` or
+   `DeckMate/DeckMateWatch/Features/…`) — observes the model type via
+   `@State` + `@Observable`, renders state, fires intents.
 3. **Preview** — `#Preview` with seeded fixture data covering loading,
    loaded, and error states.
 

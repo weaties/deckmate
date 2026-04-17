@@ -12,9 +12,11 @@ Run before opening or rebasing a PR. Adapt depth to the PR's risk tier
 
 1. `cd packages/DeckMateKit && swift build && swift test` — all green.
 2. `swiftlint` — no new violations.
-3. `swift-format lint -r apps packages` — no violations.
-4. `xcodebuild -workspace DeckMate.xcworkspace -scheme DeckMateiOS -destination 'platform=iOS Simulator,name=iPhone 15' build test` — green.
-   (Mac scheme too if the change touches `apps/DeckMateMac/` or shared views.)
+3. `swift-format lint -r DeckMate packages` — no violations.
+4. `xcodebuild -project DeckMate/DeckMate.xcodeproj -scheme DeckMate -destination 'platform=iOS Simulator,name=iPhone 15' build test` — green.
+   (Repeat for `platform=macOS` and Apple Vision Pro simulator if the
+   change touches shared views. Run the `DeckMateWatch` scheme too if
+   watch code changed.)
 5. PR body includes `Closes #<N>` (or `Fixes #<N>` for bugs).
 6. Branch name is `feature/…`, `fix/…`, or `chore/…` — never work on `main`.
 

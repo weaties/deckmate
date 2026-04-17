@@ -13,10 +13,12 @@ Two modes: **snapshot** (full) and **delta** (what changed since a given ref).
 Report:
 
 1. **Packages and modules** — `DeckMateKit` sub-modules and what each owns.
-2. **App targets** — iOS / Mac features present and their state (scaffolded vs implemented).
+2. **App targets** — `DeckMate` (multiplatform: iOS / iPad / Mac / Vision)
+   and `DeckMateWatch` (watchOS). Features present and their state
+   (scaffolded vs implemented) per destination.
 3. **Data flow** — from server → `DeckMateAPI` → ViewModel → View. Flag
    violations (views calling `URLSession` directly, ViewModels importing
-   `SwiftUI`, business logic in `apps/`).
+   `SwiftUI`, business logic inside the Xcode targets).
 4. **Complexity hotspots** — Swift files over ~250 lines. These should be
    split.
 5. **Risk-tier overlay** — which files fall under Critical / High per
@@ -41,7 +43,7 @@ Report what changed between `<git-ref>` and `HEAD`:
 ## Tips
 
 - Use the `Grep` tool to find `import SwiftUI` inside `packages/DeckMateKit`
-  (violation) and `URLSession` inside `apps/` (violation).
+  (violation) and `URLSession` inside `DeckMate/` (violation).
 - Use `Glob` to enumerate `.swift` files and sort by line count to find
   hotspots.
 - Cross-reference with `../helmlog` route files to check API drift — a
