@@ -6,16 +6,44 @@
 //
 
 import SwiftUI
+import DeckMateKit
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
+        NavigationStack {
+            List(Session.previews) { session in
+                SessionRow(session: session)
+            }
+            .navigationTitle("Sessions")
+        }
+    }
+}
+
+private struct SessionRow: View {
+    let session: Session
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
                 .imageScale(.large)
                 .foregroundStyle(.tint)
-            Text("Hello, world!")
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(session.name)
+                    .font(.headline)
+                Text(session.startUtc, format: .dateTime.day().month().year().hour().minute())
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .padding()
+        .padding(.vertical, 4)
+    }
+
+    private var icon: String {
+        switch session.kind {
+        case .race: "flag.checkered"
+        case .audio: "waveform"
+        }
     }
 }
 
