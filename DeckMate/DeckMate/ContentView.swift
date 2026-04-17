@@ -12,9 +12,14 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             List(Session.previews) { session in
-                SessionRow(session: session)
+                NavigationLink(value: session) {
+                    SessionRow(session: session)
+                }
             }
             .navigationTitle("Sessions")
+            .navigationDestination(for: Session.self) { session in
+                SessionDetailView(session: session)
+            }
         }
     }
 }
@@ -47,6 +52,61 @@ private struct SessionRow: View {
     }
 }
 
-#Preview {
+private struct SessionDetailView: View {
+    let session: Session
+
+    var body: some View {
+        Form {
+            Section("Overview") {
+                LabeledContent("Name", value: session.name)
+                LabeledContent("Kind", value: session.kind.rawValue.capitalized)
+                LabeledContent("ID", value: "\(session.id)")
+            }
+            Section("Timing") {
+                LabeledContent(
+                    "Start",
+                    value: session.startUtc.formatted(date: .abbreviated, time: .shortened)
+                )
+                if let end = session.endUtc {
+                    LabeledContent(
+                        "End",
+                        value: end.formatted(date: .abbreviated, time: .shortened)
+                    )
+                    LabeledContent("Duration", value: durationString(from: session.startUtc, to: end))
+                }
+            }
+            if session.boatId != nil || session.coOpId != nil {
+                Section("Ownership") {
+                    if let boatId = session.boatId {
+                        LabeledContent("Boat", value: boatId)
+                    }
+                    if let coOpId = session.coOpId {
+                        LabeledContent("Co-op", value: coOpId)
+                    }
+                }
+            }
+        }
+        .navigationTitle(session.name)
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+    }
+
+    private func durationString(from start: Date, to end: Date) -> String {
+        let seconds = end.timeIntervalSince(start)
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: seconds) ?? ""
+    }
+}
+
+#Preview("List") {
     ContentView()
+}
+
+#Preview("Detail") {
+    NavigationStack {
+        SessionDetailView(session: Session.previews[0])
+    }
 }
