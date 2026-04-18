@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var token: String = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @State private var showingVideoDebug = false
 
     var body: some View {
         NavigationStack {
@@ -58,6 +59,25 @@ struct SettingsView: View {
                         }
                     }
                 }
+
+                Section {
+                    Button {
+                        showingVideoDebug = true
+                    } label: {
+                        HStack {
+                            Label("Video playback debug", systemImage: "play.rectangle.on.rectangle")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
+                                .imageScale(.small)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                } header: {
+                    Text("Developer tools")
+                } footer: {
+                    Text("Paste an arbitrary YouTube URL and try each embed strategy.")
+                }
             }
             .navigationTitle("Settings")
             #if os(iOS)
@@ -83,6 +103,9 @@ struct SettingsView: View {
                     let raw = credential.headerValue
                     token = raw.hasPrefix("Bearer ") ? String(raw.dropFirst(7)) : raw
                 }
+            }
+            .sheet(isPresented: $showingVideoDebug) {
+                VideoDebugView()
             }
         }
     }

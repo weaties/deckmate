@@ -13,6 +13,16 @@ struct SessionDetailView: View {
     let session: Session
     @Environment(ServerConfiguration.self) private var config
     @State private var summary: SummaryState = .idle
+    @State private var playingVideo: PlayingVideo?
+
+    /// Wraps a URL in an Identifiable so it can drive a sheet via
+    /// `.sheet(item:)` — avoids a separate `isPresenting` boolean and
+    /// lets us carry the URL into the sheet in one shot.
+    private struct PlayingVideo: Identifiable {
+        let id = UUID()
+        let url: URL
+        let youTubeVideoId: String?
+    }
 
     private enum SummaryState {
         case idle
@@ -76,6 +86,63 @@ struct SessionDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .task { await loadSummary() }
+        .sheet(item: $playingVideo) { video in
+            videoSheet(for: video)
+        }
+    }
+
+    @ViewBuilder
+    private func videoSheet(for video: PlayingVideo) -> some View {
+        NavigationStack {
+            Group {
+                if let id = video.youTubeVideoId {
+                    YouTubePlayerView(videoId: id)
+                } else {
+                    // Non-YouTube URL — we don't know how to embed it, so
+                    // just prompt to open externally. Rare; helmlog stores
+                    // YouTube URLs by convention.
+                    ContentUnavailableView {
+                        Label("Unsupported video", systemImage: "exclamationmark.triangle")
+                    } description: {
+                        Text("This video isn't hosted on YouTube.")
+                    } actions: {
+                        Link("Open in browser", destination: video.url)
+                            .buttonStyle(.borderedProminent)
+                    }
+                }
+            }
+            .navigationTitle("Video")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { playingVideo = nil }
+                }
+                // Escape hatch for videos the uploader has embed-restricted.
+                // YouTube errors 152 / 153 render inside the iframe with
+                // their own "Watch on YouTube" link, but surfacing the same
+                // action in our own toolbar means users don't have to read
+                // YouTube's error text to know it's available.
+                ToolbarItem(placement: .primaryAction) {
+                    Link(destination: canonicalWatchURL(for: video)) {
+                        Label("Open on YouTube", systemImage: "arrow.up.right.square")
+                    }
+                }
+            }
+        }
+        .frame(minWidth: 480, minHeight: 320)
+    }
+
+    /// Best-effort canonical watch URL. For a YouTube ID we rebuild the
+    /// `youtube.com/watch?v=...` form (so the YouTube app on iOS picks
+    /// it up); otherwise we hand back the original URL unchanged.
+    private func canonicalWatchURL(for video: PlayingVideo) -> URL {
+        if let id = video.youTubeVideoId,
+           let url = URL(string: "https://www.youtube.com/watch?v=\(id)") {
+            return url
+        }
+        return video.url
     }
 
     @ViewBuilder
@@ -108,30 +175,62 @@ struct SessionDetailView: View {
 
     @ViewBuilder
     private var availabilitySection: some View {
-        let badges: [(label: String, systemImage: String, present: Bool)] = [
-            ("Track", "map", session.hasTrack),
-            ("Audio", "waveform", session.hasAudio),
-            ("Video", "play.rectangle", session.hasVideo),
-            ("Transcript", "text.bubble", session.hasTranscript),
-            ("Results", "trophy", session.hasResults),
-            ("Crew", "person.3", session.hasCrew),
-            ("Sails", "flag.2.crossed", session.hasSails),
-            ("Notes", "note.text", session.hasNotes),
-        ]
-        let present = badges.filter(\.present)
+        let present = attachedKinds
         if !present.isEmpty {
             Section("Attached content") {
                 let cols = [GridItem(.adaptive(minimum: 90), spacing: 12)]
                 LazyVGrid(columns: cols, alignment: .leading, spacing: 10) {
-                    ForEach(present, id: \.label) { badge in
-                        Label(badge.label, systemImage: badge.systemImage)
-                            .foregroundStyle(.tint)
-                            .font(.callout)
+                    ForEach(present, id: \.self) { kind in
+                        attachedBadge(for: kind)
                     }
                 }
                 .padding(.vertical, 4)
             }
         }
+    }
+
+    private var attachedKinds: [AttachedKind] {
+        var result: [AttachedKind] = []
+        if session.hasTrack { result.append(.track) }
+        if session.hasAudio { result.append(.audio) }
+        if session.hasVideo { result.append(.video) }
+        if session.hasTranscript { result.append(.transcript) }
+        if session.hasResults { result.append(.results) }
+        if session.hasCrew { result.append(.crew) }
+        if session.hasSails { result.append(.sails) }
+        if session.hasNotes { result.append(.notes) }
+        return result
+    }
+
+    @ViewBuilder
+    private func attachedBadge(for kind: AttachedKind) -> some View {
+        switch kind {
+        case .video:
+            if let raw = session.firstVideoUrl, let url = URL(string: raw) {
+                Button {
+                    playingVideo = PlayingVideo(
+                        url: url,
+                        youTubeVideoId: youTubeVideoID(from: url)
+                    )
+                } label: {
+                    Label(kind.label, systemImage: kind.systemImage)
+                        .foregroundStyle(.tint)
+                        .font(.callout)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Play video")
+            } else {
+                plainBadge(for: kind)
+            }
+        default:
+            plainBadge(for: kind)
+        }
+    }
+
+    private func plainBadge(for kind: AttachedKind) -> some View {
+        Label(kind.label, systemImage: kind.systemImage)
+            .foregroundStyle(.tint)
+            .font(.callout)
     }
 
     private func loadSummary() async {
@@ -254,6 +353,40 @@ private struct ResultsTable: View {
             .foregroundStyle(.white)
             .frame(minWidth: 28, minHeight: 22)
             .background(color, in: RoundedRectangle(cornerRadius: 5))
+    }
+}
+
+/// The eight kinds of optional content a session can carry. Driving the
+/// Attached Content grid off a real type (rather than a tuple) makes it
+/// easier to add per-kind tap behaviour as we go — video opens external,
+/// notes will push a sheet, audio will want an AVPlayer, etc.
+private enum AttachedKind: Hashable {
+    case track, audio, video, transcript, results, crew, sails, notes
+
+    var label: String {
+        switch self {
+        case .track: "Track"
+        case .audio: "Audio"
+        case .video: "Video"
+        case .transcript: "Transcript"
+        case .results: "Results"
+        case .crew: "Crew"
+        case .sails: "Sails"
+        case .notes: "Notes"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .track: "map"
+        case .audio: "waveform"
+        case .video: "play.rectangle"
+        case .transcript: "text.bubble"
+        case .results: "trophy"
+        case .crew: "person.3"
+        case .sails: "flag.2.crossed"
+        case .notes: "note.text"
+        }
     }
 }
 
