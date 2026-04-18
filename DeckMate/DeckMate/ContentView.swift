@@ -151,12 +151,34 @@ private struct SessionRow: View {
                 .foregroundStyle(.tint)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {
-                Text(session.name)
-                    .font(.headline)
-                Text(session.startUtc, format: .dateTime.day().month().year().hour().minute())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    if let label = session.shortNumberLabel {
+                        Text(label)
+                            .font(.caption2.bold())
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.tint.opacity(0.15), in: Capsule())
+                            .foregroundStyle(.tint)
+                    }
+                    Text(session.event ?? session.name)
+                        .font(.headline)
+                        .lineLimit(1)
+                }
+                HStack(spacing: 6) {
+                    Text(session.startUtc, format: .dateTime.day().month().year().hour().minute())
+                    if session.event != nil, session.event != session.name {
+                        Text("·")
+                        Text(session.name)
+                            .lineLimit(1)
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
+            Spacer()
+            SessionAvailabilityIndicators(session: session)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
     }
@@ -171,59 +193,28 @@ private struct SessionRow: View {
     }
 }
 
-private struct SessionDetailView: View {
+/// Row of small SF Symbols showing which optional content types are
+/// attached to a session. Keeps the list dense but informative — a
+/// session with audio + video + results looks visually different from
+/// a plain track-only session.
+struct SessionAvailabilityIndicators: View {
     let session: Session
-    @Environment(ServerConfiguration.self) private var config
 
     var body: some View {
-        Form {
-            if let api = config.apiClient() {
-                Section("Track") {
-                    TrackMapView(session: session, api: api)
-                        .listRowInsets(EdgeInsets())
-                }
-            }
-            Section("Overview") {
-                LabeledContent("Name", value: session.name)
-                LabeledContent("Kind", value: session.kind.rawValue.capitalized)
-                LabeledContent("ID", value: "\(session.id)")
-            }
-            Section("Timing") {
-                LabeledContent(
-                    "Start",
-                    value: session.startUtc.formatted(date: .abbreviated, time: .shortened)
-                )
-                if let end = session.endUtc {
-                    LabeledContent(
-                        "End",
-                        value: end.formatted(date: .abbreviated, time: .shortened)
-                    )
-                    LabeledContent("Duration", value: durationString(from: session.startUtc, to: end))
-                }
-            }
-            if session.boatId != nil || session.coOpId != nil {
-                Section("Ownership") {
-                    if let boatId = session.boatId {
-                        LabeledContent("Boat", value: boatId)
-                    }
-                    if let coOpId = session.coOpId {
-                        LabeledContent("Co-op", value: coOpId)
-                    }
-                }
-            }
+        HStack(spacing: 6) {
+            indicator(session.hasTrack, systemImage: "map")
+            indicator(session.hasAudio, systemImage: "waveform")
+            indicator(session.hasVideo, systemImage: "play.rectangle")
+            indicator(session.hasResults, systemImage: "trophy")
+            indicator(session.hasNotes, systemImage: "note.text")
         }
-        .navigationTitle(session.name)
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
     }
 
-    private func durationString(from start: Date, to end: Date) -> String {
-        let seconds = end.timeIntervalSince(start)
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute]
-        formatter.unitsStyle = .abbreviated
-        return formatter.string(from: seconds) ?? ""
+    @ViewBuilder
+    private func indicator(_ present: Bool, systemImage: String) -> some View {
+        if present {
+            Image(systemName: systemImage)
+        }
     }
 }
 

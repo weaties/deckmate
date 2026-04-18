@@ -72,8 +72,17 @@ struct SettingsView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .onAppear {
+            .task {
                 urlString = config.currentServer?.baseURL.absoluteString ?? ""
+                // Pre-fill the token from the Keychain so the user can
+                // change just the URL without re-pasting the key. We strip
+                // the "Bearer " prefix since the text field shows the raw
+                // key (we add it back on save).
+                if let server = config.currentServer,
+                   let credential = try? await config.authStore.credential(for: server) {
+                    let raw = credential.headerValue
+                    token = raw.hasPrefix("Bearer ") ? String(raw.dropFirst(7)) : raw
+                }
             }
         }
     }
